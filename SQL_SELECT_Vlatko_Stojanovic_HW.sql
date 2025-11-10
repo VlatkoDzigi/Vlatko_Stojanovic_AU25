@@ -16,7 +16,7 @@ INNER JOIN public.film_category AS fc
   ON fc.film_id = f.film_id
 INNER JOIN public.category AS c
   ON c.category_id = fc.category_id
-WHERE c.name = 'Animation'
+WHERE LOWER(c.name) = 'animation'
   AND f.release_year BETWEEN 2017 AND 2019
   AND f.rental_rate > 1
 ORDER BY f.title ASC;
@@ -28,7 +28,7 @@ WITH animation_film_ids AS (
   FROM public.film_category AS fc
   INNER JOIN public.category AS c
     ON c.category_id = fc.category_id
-  WHERE c.name = 'Animation'
+  WHERE LOWER(c.name) = 'animation'
 )
 SELECT DISTINCT f.title
 FROM public.film AS f
@@ -50,7 +50,7 @@ WHERE f.release_year BETWEEN 2017 AND 2019
     INNER JOIN public.category AS c
       ON c.category_id = fc.category_id
     WHERE fc.film_id = f.film_id
-      AND c.name = 'Animation'
+      AND LOWER(c.name) = 'animation'
   )
 ORDER BY f.title ASC;
 -- Pros: expresses “membership in Animation” clearly. Cons: correlated check per row.
@@ -206,9 +206,9 @@ My understanding / business logic:
 -- LEFT JOIN + conditional aggregation
 SELECT
   f.release_year,
-  SUM(CASE WHEN c.name = 'Drama'        THEN 1 ELSE 0 END) AS number_of_drama_movies,
-  SUM(CASE WHEN c.name = 'Travel'       THEN 1 ELSE 0 END) AS number_of_travel_movies,
-  SUM(CASE WHEN c.name = 'Documentary'  THEN 1 ELSE 0 END) AS number_of_documentary_movies
+  SUM(CASE WHEN LOWER(c.name) = 'drama'        THEN 1 ELSE 0 END) AS number_of_drama_movies,
+  SUM(CASE WHEN LOWER(c.name) = 'travel'       THEN 1 ELSE 0 END) AS number_of_travel_movies,
+  SUM(CASE WHEN LOWER(c.name) = 'documentary'  THEN 1 ELSE 0 END) AS number_of_documentary_movies
 FROM public.film AS f
 LEFT JOIN public.film_category AS fc
   ON fc.film_id = f.film_id
@@ -222,13 +222,13 @@ ORDER BY f.release_year DESC;
 WITH per_cat AS (
     SELECT
         f.release_year,
-        c.name AS category_name,
+        LOWER(c.name) AS category_name,
         COUNT(*) AS cnt
     FROM public.film AS f
     INNER JOIN public.film_category AS fc ON fc.film_id = f.film_id
     INNER JOIN public.category      AS c  ON c.category_id = fc.category_id
-    WHERE c.name IN ('Drama', 'Travel', 'Documentary')
-    GROUP BY f.release_year, c.name
+    WHERE LOWER(c.name) IN ('drama','travel','documentary')
+    GROUP BY f.release_year, LOWER(c.name)
 ),
 years AS (
     SELECT DISTINCT f.release_year
@@ -236,9 +236,9 @@ years AS (
 )
 SELECT
     y.release_year,
-    COALESCE(MAX(CASE WHEN pc.category_name = 'Drama'       THEN pc.cnt END), 0) AS number_of_drama_movies,
-    COALESCE(MAX(CASE WHEN pc.category_name = 'Travel'      THEN pc.cnt END), 0) AS number_of_travel_movies,
-    COALESCE(MAX(CASE WHEN pc.category_name = 'Documentary' THEN pc.cnt END), 0) AS number_of_documentary_movies
+    COALESCE(MAX(CASE WHEN pc.category_name = 'drama'       THEN pc.cnt END), 0) AS number_of_drama_movies,
+    COALESCE(MAX(CASE WHEN pc.category_name = 'travel'      THEN pc.cnt END), 0) AS number_of_travel_movies,
+    COALESCE(MAX(CASE WHEN pc.category_name = 'documentary' THEN pc.cnt END), 0) AS number_of_documentary_movies
 FROM years AS y
 LEFT JOIN per_cat AS pc
     ON pc.release_year = y.release_year
@@ -254,21 +254,21 @@ SELECT
     FROM public.film f
     INNER JOIN public.film_category fc ON fc.film_id = f.film_id
     INNER JOIN public.category c ON c.category_id = fc.category_id
-    WHERE f.release_year = y.release_year AND c.name = 'Drama'
+    WHERE f.release_year = y.release_year AND LOWER(c.name) = 'drama'
   ), 0) AS number_of_drama_movies,
   COALESCE((
     SELECT COUNT(*)
     FROM public.film f
     INNER JOIN public.film_category fc ON fc.film_id = f.film_id
     INNER JOIN public.category c ON c.category_id = fc.category_id
-    WHERE f.release_year = y.release_year AND c.name = 'Travel'
+    WHERE f.release_year = y.release_year AND LOWER(c.name) = 'travel'
   ), 0) AS number_of_travel_movies,
   COALESCE((
     SELECT COUNT(*)
     FROM public.film f
     INNER JOIN public.film_category fc ON fc.film_id = f.film_id
     INNER JOIN public.category c ON c.category_id = fc.category_id
-    WHERE f.release_year = y.release_year AND c.name = 'Documentary'
+    WHERE f.release_year = y.release_year AND LOWER(c.name) = 'documentary'
   ), 0) AS number_of_documentary_movies
 FROM (
   SELECT DISTINCT release_year
@@ -415,7 +415,7 @@ My understanding / business logic:
 SELECT
   f.title,
   COUNT(r.rental_id) AS number_of_rentals,
-  CASE f.rating
+  CASE UPPER(f.rating::text)
     WHEN 'G'      THEN '0+'
     WHEN 'PG'     THEN '10+'
     WHEN 'PG-13'  THEN '13+'
@@ -441,7 +441,7 @@ WITH film_rentals AS (
 SELECT
   f.title,
   fr.number_of_rentals,
-  CASE f.rating
+  CASE UPPER(f.rating::text)
     WHEN 'G'      THEN '0+'
     WHEN 'PG'     THEN '10+'
     WHEN 'PG-13'  THEN '13+'
@@ -464,7 +464,7 @@ SELECT
     INNER JOIN public.rental r ON r.inventory_id = i.inventory_id
     WHERE i.film_id = f.film_id
   ) AS number_of_rentals,
-  CASE f.rating
+  CASE UPPER(f.rating::text)
     WHEN 'G'      THEN '0+'
     WHEN 'PG'     THEN '10+'
     WHEN 'PG-13'  THEN '13+'
@@ -628,3 +628,4 @@ SELECT
 FROM public.actor a
 ORDER BY longest_inactivity_years DESC, a.last_name, a.first_name;
 -- Pros: No grouping outside; concise. Cons: Deeply nested subqueries. Execution time.
+
