@@ -295,7 +295,8 @@ WHERE NOT EXISTS (
   WHERE r.inventory_id = i.inventory_id
     AND r.customer_id  = (SELECT customer_id FROM cust)
     AND r.rental_date  = (SELECT rent_ts FROM t)
-);
+)
+RETURNING rental_id, inventory_id, customer_id, rental_date, return_date;
 
 WITH t AS (
   SELECT TIMESTAMP '2017-03-15 10:00:00' AS rent_ts,
@@ -351,7 +352,8 @@ WHERE NOT EXISTS (
   FROM public.payment p
   WHERE p.rental_id    = nr.rental_id
     AND p.payment_date = (SELECT pay_ts FROM t)
-);
+)
+RETURNING payment_id, customer_id, rental_id, amount, payment_date;
 
 COMMIT;
 
@@ -407,4 +409,5 @@ WHERE payment_date = TIMESTAMP '2017-03-15 10:05:00';
 
 SELECT COUNT(*) AS remaining_rentals
 FROM public.rental
+
 WHERE rental_date = TIMESTAMP '2017-03-15 10:00:00';
