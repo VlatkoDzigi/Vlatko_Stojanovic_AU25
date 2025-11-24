@@ -1,3 +1,9 @@
+-- 0) Create database for this project
+CREATE DATABASE social_media_db;
+
+-- Connect to the database
+\c social_media_db;
+
 -- 1) Create schema for this project 
 CREATE SCHEMA IF NOT EXISTS social_media;
 
@@ -300,61 +306,6 @@ CHECK (created_at >= TIMESTAMP '2000-01-01');
 ALTER TABLE follow
 ADD CONSTRAINT chk_follow_created_at
 CHECK (created_at >= TIMESTAMP '2000-01-01');
-
--- Track when the row was inserted or last touched (audit column)
-ALTER TABLE user_account
-ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
-
-ALTER TABLE user_settings
-ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
-
-ALTER TABLE reaction_type
-ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
-
-ALTER TABLE hashtag
-ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
-
-ALTER TABLE location
-ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
-
-ALTER TABLE post
-ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
-
-ALTER TABLE comment
-ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
-
-ALTER TABLE post_media
-ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
-
-ALTER TABLE post_reaction
-ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
-
-ALTER TABLE comment_reaction
-ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
-
-ALTER TABLE follow
-ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
-
-ALTER TABLE share
-ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
-
-ALTER TABLE post_hashtag
-ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
-
--- Make sure record_ts is set for any existing rows
-UPDATE user_account      SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
-UPDATE user_settings     SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
-UPDATE reaction_type     SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
-UPDATE hashtag           SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
-UPDATE location          SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
-UPDATE post              SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
-UPDATE comment           SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
-UPDATE post_media        SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
-UPDATE post_reaction     SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
-UPDATE comment_reaction  SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
-UPDATE follow            SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
-UPDATE share             SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
-UPDATE post_hashtag      SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
 
 -- Insert users 
 INSERT INTO user_account (
@@ -681,3 +632,58 @@ WHERE c.content = 'Good luck with the exam!'
         WHERE cr.comment_id = c.comment_id
           AND cr.user_id    = ua.user_id
   );
+
+-- Track when the row was inserted or last touched (audit column)
+ALTER TABLE user_account
+ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE user_settings
+ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE reaction_type
+ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE hashtag
+ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE location
+ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE post
+ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE comment
+ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE post_media
+ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE post_reaction
+ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE comment_reaction
+ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE follow
+ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE share
+ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE post_hashtag
+ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+-- Make sure record_ts is set for any existing rows
+UPDATE user_account      SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
+UPDATE user_settings     SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
+UPDATE reaction_type     SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
+UPDATE hashtag           SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
+UPDATE location          SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
+UPDATE post              SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
+UPDATE comment           SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
+UPDATE post_media        SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
+UPDATE post_reaction     SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
+UPDATE comment_reaction  SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
+UPDATE follow            SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
+UPDATE share             SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
+UPDATE post_hashtag      SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
