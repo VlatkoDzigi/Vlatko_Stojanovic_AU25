@@ -11,10 +11,10 @@ CREATE SCHEMA IF NOT EXISTS social_media;
 SET search_path TO social_media;
 
 -- Drop parent table if it already exists 
-DROP TABLE IF EXISTS user_account CASCADE;
+DROP TABLE IF EXISTS social_media.user_account CASCADE;
 
 -- Main User table (logical entity: User)
-CREATE TABLE user_account (
+CREATE TABLE social_media.user_account (
     user_id        BIGSERIAL PRIMARY KEY,
     username       VARCHAR(30)  NOT NULL UNIQUE,
     email          VARCHAR(255) NOT NULL UNIQUE,
@@ -26,25 +26,25 @@ CREATE TABLE user_account (
 );
 
 -- Reaction types (like, love, angry, etc.)
-DROP TABLE IF EXISTS reaction_type CASCADE;
+DROP TABLE IF EXISTS social_media.reaction_type CASCADE;
 
-CREATE TABLE reaction_type (
+CREATE TABLE social_media.reaction_type (
     reaction_type_id SMALLSERIAL PRIMARY KEY,
     name             VARCHAR(20) NOT NULL UNIQUE
 );
 
 -- Hashtags used on posts
-DROP TABLE IF EXISTS hashtag CASCADE;
+DROP TABLE IF EXISTS social_media.hashtag CASCADE;
 
-CREATE TABLE hashtag (
+CREATE TABLE social_media.hashtag (
     hashtag_id BIGSERIAL    PRIMARY KEY,
     tag_text   VARCHAR(100) NOT NULL UNIQUE
 );
 
 -- Locations attached to posts
-DROP TABLE IF EXISTS location CASCADE;
+DROP TABLE IF EXISTS social_media.location CASCADE;
 
-CREATE TABLE location (
+CREATE TABLE social_media.location (
     location_id BIGSERIAL    PRIMARY KEY,
     latitude    DECIMAL(9,6),
     longitude   DECIMAL(9,6),
@@ -53,9 +53,9 @@ CREATE TABLE location (
 );
 
 -- Posts created by users
-DROP TABLE IF EXISTS post CASCADE;
+DROP TABLE IF EXISTS social_media.post CASCADE;
 
-CREATE TABLE post (
+CREATE TABLE social_media.post (
     post_id     BIGSERIAL    PRIMARY KEY,
     user_id     BIGINT       NOT NULL,
     content     TEXT         NOT NULL,
@@ -66,12 +66,12 @@ CREATE TABLE post (
     -- Relationships
     CONSTRAINT fk_post_user
         FOREIGN KEY (user_id)
-        REFERENCES user_account(user_id)
+        REFERENCES social_media.user_account(user_id)
         ON DELETE CASCADE,
 
     CONSTRAINT fk_post_location
         FOREIGN KEY (location_id)
-        REFERENCES location(location_id)
+        REFERENCES social_media.location(location_id)
         ON DELETE SET NULL,
 
     -- Check constraints
@@ -83,9 +83,9 @@ CREATE TABLE post (
 );
 
 -- User settings (one-to-one with user)
-DROP TABLE IF EXISTS user_settings CASCADE;
+DROP TABLE IF EXISTS social_media.user_settings CASCADE;
 
-CREATE TABLE user_settings (
+CREATE TABLE social_media.user_settings (
     user_id       BIGINT PRIMARY KEY,
     language_code CHAR(5),
     timezone      VARCHAR(60),
@@ -94,14 +94,14 @@ CREATE TABLE user_settings (
 
     CONSTRAINT fk_settings_user
         FOREIGN KEY (user_id)
-        REFERENCES user_account(user_id)
+        REFERENCES social_media.user_account(user_id)
         ON DELETE CASCADE
 );
 
 -- Media attached to posts
-DROP TABLE IF EXISTS post_media CASCADE;
+DROP TABLE IF EXISTS social_media.post_media CASCADE;
 
-CREATE TABLE post_media (
+CREATE TABLE social_media.post_media (
     media_id   BIGSERIAL PRIMARY KEY,
     post_id    BIGINT NOT NULL,
     media_url  VARCHAR(500) NOT NULL,
@@ -112,7 +112,7 @@ CREATE TABLE post_media (
     -- Relationships
     CONSTRAINT fk_media_post
         FOREIGN KEY (post_id)
-        REFERENCES post(post_id)
+        REFERENCES social_media.post(post_id)
         ON DELETE CASCADE,
 
     -- Check constraint: measured values cannot be negative
@@ -124,9 +124,9 @@ CREATE TABLE post_media (
 );
 
 -- Comments on posts 
-DROP TABLE IF EXISTS comment CASCADE; 
+DROP TABLE IF EXISTS social_media.comment CASCADE; 
 
-CREATE TABLE comment (
+CREATE TABLE social_media.comment (
     comment_id         BIGSERIAL PRIMARY KEY,
     post_id            BIGINT      NOT NULL,
     user_id            BIGINT      NOT NULL,
@@ -137,17 +137,17 @@ CREATE TABLE comment (
     -- Relationships
     CONSTRAINT fk_comment_post
         FOREIGN KEY (post_id)
-        REFERENCES post(post_id)
+        REFERENCES social_media.post(post_id)
         ON DELETE CASCADE,
 
     CONSTRAINT fk_comment_user
         FOREIGN KEY (user_id)
-        REFERENCES user_account(user_id)
+        REFERENCES social_media.user_account(user_id)
         ON DELETE CASCADE,
 
     CONSTRAINT fk_comment_parent
         FOREIGN KEY (parent_comment_id)
-        REFERENCES comment(comment_id)
+        REFERENCES social_media.comment(comment_id)
         ON DELETE CASCADE,
 
     -- Check constraint: comment text must not be empty
@@ -156,9 +156,9 @@ CREATE TABLE comment (
 );
 
 -- Reactions on posts
-DROP TABLE IF EXISTS post_reaction CASCADE;
+DROP TABLE IF EXISTS social_media.post_reaction CASCADE;
 
-CREATE TABLE post_reaction (
+CREATE TABLE social_media.post_reaction (
     post_id         BIGINT    NOT NULL,
     user_id         BIGINT    NOT NULL,
     reaction_type_id SMALLINT NOT NULL,
@@ -171,17 +171,17 @@ CREATE TABLE post_reaction (
     -- Relationships
     CONSTRAINT fk_post_reaction_post
         FOREIGN KEY (post_id)
-        REFERENCES post(post_id)
+        REFERENCES social_media.post(post_id)
         ON DELETE CASCADE,
 
     CONSTRAINT fk_post_reaction_user
         FOREIGN KEY (user_id)
-        REFERENCES user_account(user_id)
+        REFERENCES social_media.user_account(user_id)
         ON DELETE CASCADE,
 
     CONSTRAINT fk_post_reaction_type
         FOREIGN KEY (reaction_type_id)
-        REFERENCES reaction_type(reaction_type_id)
+        REFERENCES social_media.reaction_type(reaction_type_id)
         ON DELETE RESTRICT,
 
     -- Check constraint: reaction type must be positive
@@ -190,9 +190,9 @@ CREATE TABLE post_reaction (
 );
 
 -- Mapping between posts and hashtags
-DROP TABLE IF EXISTS post_hashtag CASCADE;
+DROP TABLE IF EXISTS social_media.post_hashtag CASCADE;
 
-CREATE TABLE post_hashtag (
+CREATE TABLE social_media.post_hashtag (
     post_id    BIGINT    NOT NULL,
     hashtag_id BIGINT    NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -202,19 +202,19 @@ CREATE TABLE post_hashtag (
 
     CONSTRAINT fk_post_hashtag_post
         FOREIGN KEY (post_id)
-        REFERENCES post(post_id)
+        REFERENCES social_media.post(post_id)
         ON DELETE CASCADE,
 
     CONSTRAINT fk_post_hashtag_tag
         FOREIGN KEY (hashtag_id)
-        REFERENCES hashtag(hashtag_id)
+        REFERENCES social_media.hashtag(hashtag_id)
         ON DELETE CASCADE
 );
 
 -- Follow relationships between users
-DROP TABLE IF EXISTS follow CASCADE;
+DROP TABLE IF EXISTS social_media.follow CASCADE;
 
-CREATE TABLE follow (
+CREATE TABLE social_media.follow (
     follower_user_id BIGINT      NOT NULL,
     followed_user_id BIGINT      NOT NULL,
     status           VARCHAR(15) NOT NULL,
@@ -225,12 +225,12 @@ CREATE TABLE follow (
 
     CONSTRAINT fk_follow_follower
         FOREIGN KEY (follower_user_id)
-        REFERENCES user_account(user_id)
+        REFERENCES social_media.user_account(user_id)
         ON DELETE CASCADE,
 
     CONSTRAINT fk_follow_followed
         FOREIGN KEY (followed_user_id)
-        REFERENCES user_account(user_id)
+        REFERENCES social_media.user_account(user_id)
         ON DELETE CASCADE,
 
     CONSTRAINT chk_follow_status
@@ -239,9 +239,9 @@ CREATE TABLE follow (
 
 
 -- Shares of posts
-DROP TABLE IF EXISTS share CASCADE;
+DROP TABLE IF EXISTS social_media.share CASCADE;
 
-CREATE TABLE share (
+CREATE TABLE social_media.share (
     share_id   BIGSERIAL  PRIMARY KEY,
     post_id    BIGINT     NOT NULL,
     user_id    BIGINT     NOT NULL,
@@ -250,12 +250,12 @@ CREATE TABLE share (
 
     CONSTRAINT fk_share_post
         FOREIGN KEY (post_id)
-        REFERENCES post(post_id)
+        REFERENCES social_media.post(post_id)
         ON DELETE CASCADE,
 
     CONSTRAINT fk_share_user
         FOREIGN KEY (user_id)
-        REFERENCES user_account(user_id)
+        REFERENCES social_media.user_account(user_id)
         ON DELETE CASCADE,
 
     CONSTRAINT uq_share_post_user
@@ -263,9 +263,9 @@ CREATE TABLE share (
 );
 
 -- Reactions on comments
-DROP TABLE IF EXISTS comment_reaction CASCADE;
+DROP TABLE IF EXISTS social_media.comment_reaction CASCADE;
 
-CREATE TABLE comment_reaction (
+CREATE TABLE social_media.comment_reaction (
     comment_id       BIGINT    NOT NULL,
     user_id          BIGINT    NOT NULL,
     reaction_type_id SMALLINT  NOT NULL,
@@ -276,39 +276,39 @@ CREATE TABLE comment_reaction (
 
     CONSTRAINT fk_comment_reaction_comment
         FOREIGN KEY (comment_id)
-        REFERENCES comment(comment_id)
+        REFERENCES social_media.comment(comment_id)
         ON DELETE CASCADE,
 
     CONSTRAINT fk_comment_reaction_user
         FOREIGN KEY (user_id)
-        REFERENCES user_account(user_id)
+        REFERENCES social_media.user_account(user_id)
         ON DELETE CASCADE,
 
     CONSTRAINT fk_comment_reaction_type
         FOREIGN KEY (reaction_type_id)
-        REFERENCES reaction_type(reaction_type_id),
+        REFERENCES social_media.reaction_type(reaction_type_id),
 
     CONSTRAINT chk_comment_reaction_created_at
         CHECK (created_at >= TIMESTAMP '2000-01-01')
 );
 
 -- Ensure comment date is not before year 2000
-ALTER TABLE comment
+ALTER TABLE social_media.comment
 ADD CONSTRAINT chk_comment_created_at
 CHECK (created_at >= TIMESTAMP '2000-01-01');
 
 -- Ensure share date is not before year 2000
-ALTER TABLE share
+ALTER TABLE social_media.share
 ADD CONSTRAINT chk_share_created_at
 CHECK (created_at >= TIMESTAMP '2000-01-01');
 
 -- Ensure follow date is not before year 2000 
-ALTER TABLE follow
+ALTER TABLE social_media.follow
 ADD CONSTRAINT chk_follow_created_at
 CHECK (created_at >= TIMESTAMP '2000-01-01');
 
 -- Insert users 
-INSERT INTO user_account (
+INSERT INTO social_media.user_account (
     username,
     email,
     password_hash,
@@ -322,7 +322,7 @@ VALUES
 ON CONFLICT (username) DO NOTHING;
 
 -- User settings for Marko
-INSERT INTO user_settings (
+INSERT INTO social_media.user_settings (
     user_id,
     language_code,
     timezone,
@@ -335,16 +335,16 @@ SELECT
     'Europe/Belgrade',
     FALSE,
     TRUE
-FROM user_account ua
+FROM social_media.user_account ua
 WHERE ua.username = 'marko'
   AND NOT EXISTS (
       SELECT 1
-      FROM user_settings us
+      FROM social_media.user_settings us
       WHERE us.user_id = ua.user_id
   );
 
 -- User settings for Jelena
-INSERT INTO user_settings (
+INSERT INTO social_media.user_settings (
     user_id,
     language_code,
     timezone,
@@ -357,16 +357,16 @@ SELECT
     'Europe/Belgrade',
     TRUE,
     TRUE
-FROM user_account ua
+FROM social_media.user_account ua
 WHERE ua.username = 'jelena'
   AND NOT EXISTS (
       SELECT 1
-      FROM user_settings us
+      FROM social_media.user_settings us
       WHERE us.user_id = ua.user_id
   );
 
 -- Basic reaction types
-INSERT INTO reaction_type (reaction_type_id, name)
+INSERT INTO social_media.reaction_type (reaction_type_id, name)
 VALUES
     (1, 'like'),
     (2, 'love'),
@@ -374,7 +374,7 @@ VALUES
 ON CONFLICT (reaction_type_id) DO NOTHING;
 
 -- Hashtags 
-INSERT INTO hashtag (tag_text)
+INSERT INTO social_media.hashtag (tag_text)
 VALUES
     ('#weekend'),
     ('#coffee'),
@@ -382,37 +382,37 @@ VALUES
 ON CONFLICT (tag_text) DO NOTHING;
 
 -- Locations 
-INSERT INTO location (latitude, longitude, city, country)
+INSERT INTO social_media.location (latitude, longitude, city, country)
 VALUES
     (44.7866, 20.4489, 'Belgrade', 'Serbia'),
     (43.3209, 21.8958, 'Nis',      'Serbia')
 ON CONFLICT DO NOTHING;
 
 -- Posts for Marko and Jelena
-INSERT INTO post (user_id, content, visibility, location_id)
+INSERT INTO social_media.post (user_id, content, visibility, location_id)
 SELECT ua.user_id,
        'First workout in the gym.',
        'friends',
        loc.location_id
-FROM user_account ua
-LEFT JOIN location loc ON loc.city = 'Belgrade'
+FROM social_media.user_account ua
+LEFT JOIN social_media.location loc ON loc.city = 'Belgrade'
 WHERE ua.username = 'marko'
   AND NOT EXISTS (
-        SELECT 1 FROM post p
+        SELECT 1 FROM social_media.post p
         WHERE p.user_id = ua.user_id
           AND p.content = 'First workout in the gym.'
   );
 
-INSERT INTO post (user_id, content, visibility, location_id)
+INSERT INTO social_media.post (user_id, content, visibility, location_id)
 SELECT ua.user_id,
        'Studying SQL for the exam.',
        'public',
        loc.location_id
-FROM user_account ua
-LEFT JOIN location loc ON loc.city = 'Nis'
+FROM social_media.user_account ua
+LEFT JOIN social_media.location loc ON loc.city = 'Nis'
 WHERE ua.username = 'jelena'
   AND NOT EXISTS (
-        SELECT 1 FROM post p
+        SELECT 1 FROM social_media.post p
         WHERE p.user_id = ua.user_id
           AND p.content = 'Studying SQL for the exam.'
   );
@@ -420,30 +420,30 @@ WHERE ua.username = 'jelena'
 
 -- Comments on posts
 -- Jelena comments on Marko's post
-INSERT INTO comment (post_id, user_id, content)
+INSERT INTO social_media.comment (post_id, user_id, content)
 SELECT p.post_id,
        ua.user_id,
        'Great job, keep going!'
-FROM user_account ua
-JOIN post p ON p.content = 'First workout in the gym.'
+FROM social_media.user_account ua
+JOIN social_media.post p ON p.content = 'First workout in the gym.'
 WHERE ua.username = 'jelena'
   AND NOT EXISTS (
-        SELECT 1 FROM comment c
+        SELECT 1 FROM social_media.comment c
         WHERE c.post_id = p.post_id
           AND c.user_id = ua.user_id
           AND c.content = 'Great job, keep going!'
   );
 
 -- Marko comments on Jelena's post
-INSERT INTO comment (post_id, user_id, content)
+INSERT INTO social_media.comment (post_id, user_id, content)
 SELECT p.post_id,
        ua.user_id,
        'Good luck with the exam!'
-FROM user_account ua
-JOIN post p ON p.content = 'Studying SQL for the exam.'
+FROM social_media.user_account ua
+JOIN social_media.post p ON p.content = 'Studying SQL for the exam.'
 WHERE ua.username = 'marko'
   AND NOT EXISTS (
-        SELECT 1 FROM comment c
+        SELECT 1 FROM social_media.comment c
         WHERE c.post_id = p.post_id
           AND c.user_id = ua.user_id
           AND c.content = 'Good luck with the exam!'
@@ -452,31 +452,31 @@ WHERE ua.username = 'marko'
 
 -- Reactions on posts
 -- Jelena likes Marko's post
-INSERT INTO post_reaction (post_id, user_id, reaction_type_id)
+INSERT INTO social_media.post_reaction (post_id, user_id, reaction_type_id)
 SELECT p.post_id,
        ua.user_id,
        rt.reaction_type_id
-FROM user_account ua
-JOIN post p          ON p.content = 'First workout in the gym.'
-JOIN reaction_type rt ON rt.name = 'like'
+FROM social_media.user_account ua
+JOIN social_media.post p          ON p.content = 'First workout in the gym.'
+JOIN social_media.reaction_type rt ON rt.name = 'like'
 WHERE ua.username = 'jelena'
   AND NOT EXISTS (
-        SELECT 1 FROM post_reaction pr
+        SELECT 1 FROM social_media.post_reaction pr
         WHERE pr.post_id = p.post_id
           AND pr.user_id = ua.user_id
   );
 
 -- Marko loves Jelena's post
-INSERT INTO post_reaction (post_id, user_id, reaction_type_id)
+INSERT INTO social_media.post_reaction (post_id, user_id, reaction_type_id)
 SELECT p.post_id,
        ua.user_id,
        rt.reaction_type_id
-FROM user_account ua
-JOIN post p          ON p.content = 'Studying SQL for the exam.'
-JOIN reaction_type rt ON rt.name = 'love'
+FROM social_media.user_account ua
+JOIN social_media.post p          ON p.content = 'Studying SQL for the exam.'
+JOIN social_media.reaction_type rt ON rt.name = 'love'
 WHERE ua.username = 'marko'
   AND NOT EXISTS (
-        SELECT 1 FROM post_reaction pr
+        SELECT 1 FROM social_media.post_reaction pr
         WHERE pr.post_id = p.post_id
           AND pr.user_id = ua.user_id
   );
@@ -484,29 +484,29 @@ WHERE ua.username = 'marko'
 
 -- Follow relations
 -- Marko follows Jelena
-INSERT INTO follow (follower_user_id, followed_user_id, status)
+INSERT INTO social_media.follow (follower_user_id, followed_user_id, status)
 SELECT f.user_id,
        t.user_id,
        'accepted'
-FROM user_account f
-JOIN user_account t ON t.username = 'jelena'
+FROM social_media.user_account f
+JOIN social_media.user_account t ON t.username = 'jelena'
 WHERE f.username = 'marko'
   AND NOT EXISTS (
-        SELECT 1 FROM follow fo
+        SELECT 1 FROM social_media.follow fo
         WHERE fo.follower_user_id  = f.user_id
           AND fo.followed_user_id = t.user_id
   );
 
 -- Jelena follows Marko
-INSERT INTO follow (follower_user_id, followed_user_id, status)
+INSERT INTO social_media.follow (follower_user_id, followed_user_id, status)
 SELECT f.user_id,
        t.user_id,
        'accepted'
-FROM user_account f
-JOIN user_account t ON t.username = 'marko'
+FROM social_media.user_account f
+JOIN social_media.user_account t ON t.username = 'marko'
 WHERE f.username = 'jelena'
   AND NOT EXISTS (
-        SELECT 1 FROM follow fo
+        SELECT 1 FROM social_media.follow fo
         WHERE fo.follower_user_id  = f.user_id
           AND fo.followed_user_id = t.user_id
   );
@@ -514,29 +514,29 @@ WHERE f.username = 'jelena'
 
 -- Shares of posts
 -- Jelena shares Marko's post
-INSERT INTO share (post_id, user_id, message)
+INSERT INTO social_media.share (post_id, user_id, message)
 SELECT p.post_id,
        ua.user_id,
        'Take a look at this workout post.'
-FROM user_account ua
-JOIN post p ON p.content = 'First workout in the gym.'
+FROM social_media.user_account ua
+JOIN social_media.post p ON p.content = 'First workout in the gym.'
 WHERE ua.username = 'jelena'
   AND NOT EXISTS (
-        SELECT 1 FROM share s
+        SELECT 1 FROM social_media.share s
         WHERE s.post_id = p.post_id
           AND s.user_id = ua.user_id
   );
 
 -- Marko shares Jelena's post
-INSERT INTO share (post_id, user_id, message)
+INSERT INTO social_media.share (post_id, user_id, message)
 SELECT p.post_id,
        ua.user_id,
        'Nice post about studying SQL.'
-FROM user_account ua
-JOIN post p ON p.content = 'Studying SQL for the exam.'
+FROM social_media.user_account ua
+JOIN social_media.post p ON p.content = 'Studying SQL for the exam.'
 WHERE ua.username = 'marko'
   AND NOT EXISTS (
-        SELECT 1 FROM share s
+        SELECT 1 FROM social_media.share s
         WHERE s.post_id = p.post_id
           AND s.user_id = ua.user_id
   );
@@ -544,31 +544,31 @@ WHERE ua.username = 'marko'
 
 -- Media attached to posts
 -- Media for Marko's post
-INSERT INTO post_media (post_id, media_url, media_type, width, height)
+INSERT INTO social_media.post_media (post_id, media_url, media_type, width, height)
 SELECT p.post_id,
        'https://example.com/gym_photo.jpg',
        'image',
        800,
        600
-FROM post p
+FROM social_media.post p
 WHERE p.content = 'First workout in the gym.'
   AND NOT EXISTS (
-        SELECT 1 FROM post_media m
+        SELECT 1 FROM social_media.post_media m
         WHERE m.post_id  = p.post_id
           AND m.media_url = 'https://example.com/gym_photo.jpg'
   );
 
 -- Media for Jelena's post
-INSERT INTO post_media (post_id, media_url, media_type, width, height)
+INSERT INTO social_media.post_media (post_id, media_url, media_type, width, height)
 SELECT p.post_id,
        'https://example.com/sql_notes.png',
        'image',
        1024,
        768
-FROM post p
+FROM social_media.post p
 WHERE p.content = 'Studying SQL for the exam.'
   AND NOT EXISTS (
-        SELECT 1 FROM post_media m
+        SELECT 1 FROM social_media.post_media m
         WHERE m.post_id  = p.post_id
           AND m.media_url = 'https://example.com/sql_notes.png'
   );
@@ -576,27 +576,27 @@ WHERE p.content = 'Studying SQL for the exam.'
 
 -- Hashtags attached to posts
 -- Marko's post gets #weekend
-INSERT INTO post_hashtag (post_id, hashtag_id)
+INSERT INTO social_media.post_hashtag (post_id, hashtag_id)
 SELECT p.post_id,
        h.hashtag_id
-FROM post p
-JOIN hashtag h ON h.tag_text = '#weekend'
+FROM social_media.post p
+JOIN social_media.hashtag h ON h.tag_text = '#weekend'
 WHERE p.content = 'First workout in the gym.'
   AND NOT EXISTS (
-        SELECT 1 FROM post_hashtag ph
+        SELECT 1 FROM social_media.post_hashtag ph
         WHERE ph.post_id   = p.post_id
           AND ph.hashtag_id = h.hashtag_id
   );
 
 -- Jelena's post gets #study
-INSERT INTO post_hashtag (post_id, hashtag_id)
+INSERT INTO social_media.post_hashtag (post_id, hashtag_id)
 SELECT p.post_id,
        h.hashtag_id
-FROM post p
-JOIN hashtag h ON h.tag_text = '#study'
+FROM social_media.post p
+JOIN social_media.hashtag h ON h.tag_text = '#study'
 WHERE p.content = 'Studying SQL for the exam.'
   AND NOT EXISTS (
-        SELECT 1 FROM post_hashtag ph
+        SELECT 1 FROM social_media.post_hashtag ph
         WHERE ph.post_id   = p.post_id
           AND ph.hashtag_id = h.hashtag_id
   );
@@ -604,86 +604,86 @@ WHERE p.content = 'Studying SQL for the exam.'
 
 -- Reactions on comments
 -- Marko likes Jelena's comment on his post
-INSERT INTO comment_reaction (comment_id, user_id, reaction_type_id)
+INSERT INTO social_media.comment_reaction (comment_id, user_id, reaction_type_id)
 SELECT c.comment_id,
        ua.user_id,
        rt.reaction_type_id
-FROM comment c
-JOIN user_account ua  ON ua.username = 'marko'
-JOIN reaction_type rt ON rt.name = 'like'
+FROM social_media.comment c
+JOIN social_media.user_account ua  ON ua.username = 'marko'
+JOIN social_media.reaction_type rt ON rt.name = 'like'
 WHERE c.content = 'Great job, keep going!'
   AND NOT EXISTS (
-        SELECT 1 FROM comment_reaction cr
+        SELECT 1 FROM social_media.comment_reaction cr
         WHERE cr.comment_id = c.comment_id
           AND cr.user_id    = ua.user_id
   );
 
 -- Jelena likes Marko's comment on her post
-INSERT INTO comment_reaction (comment_id, user_id, reaction_type_id)
+INSERT INTO social_media.comment_reaction (comment_id, user_id, reaction_type_id)
 SELECT c.comment_id,
        ua.user_id,
        rt.reaction_type_id
-FROM comment c
-JOIN user_account ua  ON ua.username = 'jelena'
-JOIN reaction_type rt ON rt.name = 'like'
+FROM social_media.comment c
+JOIN social_media.user_account ua  ON ua.username = 'jelena'
+JOIN social_media.reaction_type rt ON rt.name = 'like'
 WHERE c.content = 'Good luck with the exam!'
   AND NOT EXISTS (
-        SELECT 1 FROM comment_reaction cr
+        SELECT 1 FROM social_media.comment_reaction cr
         WHERE cr.comment_id = c.comment_id
           AND cr.user_id    = ua.user_id
   );
 
 -- Track when the row was inserted or last touched (audit column)
-ALTER TABLE user_account
+ALTER TABLE social_media.user_account
 ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
-ALTER TABLE user_settings
+ALTER TABLE social_media.user_settings
 ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
-ALTER TABLE reaction_type
+ALTER TABLE social_media.reaction_type
 ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
-ALTER TABLE hashtag
+ALTER TABLE social_media.hashtag
 ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
-ALTER TABLE location
+ALTER TABLE social_media.location
 ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
-ALTER TABLE post
+ALTER TABLE social_media.post
 ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
-ALTER TABLE comment
+ALTER TABLE social_media.comment
 ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
-ALTER TABLE post_media
+ALTER TABLE social_media.post_media
 ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
-ALTER TABLE post_reaction
+ALTER TABLE social_media.post_reaction
 ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
-ALTER TABLE comment_reaction
+ALTER TABLE social_media.comment_reaction
 ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
-ALTER TABLE follow
+ALTER TABLE social_media.follow
 ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
-ALTER TABLE share
+ALTER TABLE social_media.share
 ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
-ALTER TABLE post_hashtag
+ALTER TABLE social_media.post_hashtag
 ADD COLUMN record_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
 -- Make sure record_ts is set for any existing rows
-UPDATE user_account      SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
-UPDATE user_settings     SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
-UPDATE reaction_type     SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
-UPDATE hashtag           SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
-UPDATE location          SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
-UPDATE post              SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
-UPDATE comment           SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
-UPDATE post_media        SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
-UPDATE post_reaction     SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
-UPDATE comment_reaction  SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
-UPDATE follow            SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
-UPDATE share             SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
-UPDATE post_hashtag      SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
+UPDATE social_media.user_account      SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
+UPDATE social_media.user_settings     SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
+UPDATE social_media.reaction_type     SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
+UPDATE social_media.hashtag           SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
+UPDATE social_media.location          SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
+UPDATE social_media.post              SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
+UPDATE social_media.comment           SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
+UPDATE social_media.post_media        SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
+UPDATE social_media.post_reaction     SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
+UPDATE social_media.comment_reaction  SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
+UPDATE social_media.follow            SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
+UPDATE social_media.share             SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
+UPDATE social_media.post_hashtag      SET record_ts = COALESCE(record_ts, CURRENT_TIMESTAMP);
