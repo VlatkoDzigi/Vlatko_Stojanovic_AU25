@@ -104,13 +104,16 @@ BEGIN
                 ORDER BY COUNT(r.rental_id) DESC
             ) AS rn
         FROM public.country co
-        JOIN public.city ci        ON ci.country_id = co.country_id
-        JOIN public.address a      ON a.city_id     = ci.city_id
-        JOIN public.customer cu    ON cu.address_id = a.address_id
-        JOIN public.rental r       ON r.customer_id = cu.customer_id
+        JOIN public.city ci        ON ci.country_id  = co.country_id
+        JOIN public.address a      ON a.city_id      = ci.city_id
+        JOIN public.customer cu    ON cu.address_id  = a.address_id
+        JOIN public.rental r       ON r.customer_id  = cu.customer_id
         JOIN public.inventory i    ON i.inventory_id = r.inventory_id
         JOIN public.film f         ON f.film_id      = i.film_id
-        WHERE co.country = ANY (p_countries)
+        WHERE LOWER(co.country) IN (
+            SELECT LOWER(country_name)
+            FROM unnest(p_countries) AS country_name
+        )
         GROUP BY co.country_id, f.film_id
     ) top
     JOIN public.country  co ON co.country_id  = top.country_id
@@ -223,10 +226,12 @@ BEGIN
     SELECT l.language_id
     INTO v_language_id
     FROM public.language AS l
-    WHERE trim(l.name) = trim(p_language_name);
+    WHERE LOWER(TRIM(l.name)) = LOWER(TRIM(p_language_name));
 
     IF v_language_id IS NULL THEN
-        RAISE EXCEPTION 'Language "%" does not exist in table "language"', p_language_name;
+        INSERT INTO public.language (name, last_update)
+        VALUES (p_language_name, CURRENT_TIMESTAMP)
+        RETURNING language_id INTO v_language_id;
     END IF;
 
     PERFORM 1
@@ -261,3 +266,8 @@ BEGIN
     RETURN v_new_film_id;
 END;
 $$;
+
+-- Check
+SELECT core.new_movie('Test Klingon Movie');
+
+SELECT core.new_movie('Another Movie', 2006, 'English');
