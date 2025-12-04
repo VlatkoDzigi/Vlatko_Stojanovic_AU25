@@ -1,0 +1,43 @@
+Task 4
+
+4.1. How can one restrict access to certain columns of a database table?
+
+Use column-level privileges in `GRANT` / `REVOKE`, e.g.
+`GRANT SELECT (col1, col2) ON my_table TO some_role;` – the role can read only those columns, not the others.
+
+Optionally, expose a view that selects only the allowed columns, grant rights on the view, and revoke direct access to the base table.
+
+
+
+4.2. What is the difference between user identification and user authentication?
+
+User identification = the user claims who they are (for example, sending a username or role name).
+
+User authentication = the system verifies that claim (for example, by checking a password, certificate, Kerberos ticket, etc.).
+
+
+
+4.3. What are the recommended authentication protocols for PostgreSQL?
+
+For password-based logins, PostgreSQL recommends `scram-sha-256` instead of older `md5` or plain `password`, 
+because it provides stronger, salted hashing and better protection against password theft.
+
+In enterprise setups, stronger options such as GSSAPI/SSPI (Kerberos/Active Directory single sign-on) and TLS client certificates are also recommended, 
+often in combination with encrypted connections (SSL/TLS).
+
+
+
+4.4. What is proxy authentication in PostgreSQL and what is it for? Why does it make role-based access control easier to implement?
+
+Proxy authentication (in the PostgreSQL context) means that a middle layer (for example, a web app or connection pooler) authenticates the real end user, 
+but connects to PostgreSQL using a technical account and then switches to, or acts as, another database role on the user’s behalf—typically using `SET ROLE` or `SET SESSION AUTHORIZATION`.
+
+The proxy is responsible for checking passwords / SSO tokens; PostgreSQL mainly handles authorization (permissions, roles, RLS policies) instead of lots of individual passwords.
+
+This makes the earlier role-based access control and row-level security easier to implement because:
+
+ - You can keep a small, clean set of database roles that match your business roles (customer, clerk, admin, etc.).
+
+ - The application just maps each logged-in user to the right role and calls `SET ROLE`; all table privileges and RLS policies then automatically apply based on that role.
+
+ - You avoid managing separate database passwords for every end user, while still enforcing per-user or per-role security inside PostgreSQL.
