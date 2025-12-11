@@ -1,0 +1,124 @@
+Task 1
+
+
+1.1) List all roles and their basic permissions
+
+```
+SELECT
+    rolname,
+    rolcanlogin   AS can_login,
+    rolsuper      AS is_superuser,
+    rolcreatedb   AS can_create_db,
+    rolcreaterole AS can_create_role
+FROM pg_roles
+ORDER BY rolname;
+```
+
+After checking the existing roles in the dvdrental database, I noticed that most of the built-in PostgreSQL roles do not have login permission and do not hold any advanced privileges.
+System roles such as `pg_monitor`, `pg_read_all_data`, and `pg_write_all_data` have `can_login = false` and cannot create databases or new roles.
+
+The only role with full privileges is postgres, which is expected since it is the main superuser account on the instance.
+At this moment, there are no additional user-created roles with login rights or object-level permissions.
+
+
+1.2) Database owner and connection limit for dvdrental
+
+```
+SELECT
+    datname,
+    pg_get_userbyid(datdba) AS owner,
+    datconnlimit
+FROM pg_database
+WHERE datname = 'dvdrental';
+```
+
+For the `dvdrental` database the owner is `postgres` and the connection limit is -1.
+That means the main superuser account owns this database and there is no fixed limit on how many client connections it can accept.
+
+
+1.3) Explicit database-level privileges (CONNECT, TEMP, etc.)
+
+```
+SELECT
+    d.datname,
+    (aclexplode(d.datacl)).grantee,
+    (aclexplode(d.datacl)).privilege_type
+FROM pg_database AS d
+WHERE d.datname = 'dvdrental';
+```
+
+This query did not return any rows for `dvdrental`.
+So there are no custom database-level GRANTs defined (for example CONNECT or TEMP for specific roles). 
+Only the implicit privileges of the owner (`postgres`) and other superusers are in effect.
+
+
+1.4) Table-level privileges in the public schema
+SELECT
+    table_schema,
+    table_name,
+    grantee,
+    privilege_type
+FROM information_schema.table_privileges
+WHERE table_catalog = 'dvdrental'
+  AND table_schema = 'public'
+ORDER BY table_name, grantee, privilege_type;
+
+The result shows 203 rows of privileges, all granted to the `postgres` role on tables in the `public` schema.
+For every table (`actor`, `film`, `rental`, `payment`, `store`, `table_to_delete`, etc.) `postgres` has full rights: 
+`SELECT`, `INSERT`, `UPDATE`, `DELETE`, `REFERENCES`, `TRIGGER` and `TRUNCATE`. 
+No other roles have explicit table-level permissions in this schema.
+
+
+1.5) Row-level security policies, if any
+
+```
+SELECT
+    schemaname,
+    tablename,
+    policyname,
+    permissive,
+    roles,
+    qual,
+    with_check
+FROM pg_policies
+WHERE schemaname = 'public';
+```
+
+When I checked `pg_policies` for the `public` schema, the query did not return any rows.
+This means there are no row-level security policies defined on the `dvdrental` tables in the `public` schema – 
+access is controlled only by standard table privileges, not by per-row filters.
+
+
+1.6) Check which tables have row-level security enabled
+
+```
+SELECT
+    n.nspname AS schema_name,
+    c.relname AS table_name,
+    c.relrowsecurity,
+    c.relforcerowsecurity
+FROM pg_class c
+JOIN pg_namespace n
+  ON n.oid = c.relnamespace
+WHERE n.nspname = 'public'
+  AND c.relkind = 'r'
+ORDER BY c.relname;
+```
+
+This query lists all regular tables in the `public` schema and shows whether row-level security is enabled or forced.
+All 21 tables (such as `actor`, `customer`, `payment`, `rental`, etc.) have `relrowsecurity = false` and `relforcerowsecurity = false`.
+So row-level security is currently disabled for every table in `dvdrental`.
+
+
+1.7) Some database-level settings (connections, password encryption)
+
+```
+SHOW max_connections;
+
+SHOW password_encryption;
+```
+
+I checked two global settings on the server:
+ - `max_connections` shows the maximum number of concurrent database connections allowed. This limits how many clients can work with PostgreSQL at the same time.
+ - `password_encryption` returned `scram-sha-256`, which means new user passwords are stored using SCRAM-SHA-256 hashing (a stronger and more modern method than the old `md5`).
+These settings belong to the PostgreSQL instance, but they also affect how the `dvdrental` database is secured and how many users can connect.
